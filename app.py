@@ -20,7 +20,14 @@ import numpy as np
 import random
 
 MODEL = None
+MODELS = None
 IS_SHARED_SPACE = "musicgen/MusicGen" in os.environ.get('SPACE_ID', '')
+IS_SHARED_SPACE = "musicgen/MusicGen" in os.environ.get('SPACE_ID', '')
+INTERRUPTED = False
+INTERRUPTED = False
+UNLOAD_MODEL = False
+UNLOAD_MODEL = False
+MOVE_TO_CPU = False
 
 def interrupt():
     global INTERRUPTING
@@ -135,171 +142,95 @@ def predict(model, text, melody, duration, dimension, topk, topp, temperature, c
     return waveform_video, seed
 
 
-def ui(**kwargs):
-    with gr.Blocks() as interface:
-        gr.Markdown(
-            """
-            # MusicGen
-            This is your private demo for [MusicGen](https://github.com/facebookresearch/audiocraft), a simple and controllable model for music generation
-            presented at: ["Simple and Controllable Music Generation"](https://huggingface.co/papers/2306.05284)
-            """
-        )
-        if IS_SHARED_SPACE:
-            gr.Markdown("""
-                ⚠ This Space doesn't work in this shared UI ⚠
+css="""
+#col-container {max-width: 910px; margin-left: auto; margin-right: auto;}
+a {text-decoration-line: underline; font-weight: 600;}
+"""
+with gr.Blocks(title="UnlimitedMusicGen", css=css) as demo:
+    gr.Markdown(
+        """
+        # UnlimitedMusicGen
+        This is your private demo for [UnlimitedMusicGen](https://github.com/Oncorporation/audiocraft), a simple and controllable model for music generation
+        presented at: ["Simple and Controllable Music Generation"](https://huggingface.co/papers/2306.05284)
+        """
+    )
+    if IS_SHARED_SPACE:
+        gr.Markdown("""
+            ⚠ This Space doesn't work in this shared UI ⚠
 
-                <a href="https://huggingface.co/spaces/musicgen/MusicGen?duplicate=true" style="display: inline-block;margin-top: .5em;margin-right: .25em;" target="_blank">
-                <img style="margin-bottom: 0em;display: inline;margin-top: -.25em;" src="https://bit.ly/3gLdBN6" alt="Duplicate Space"></a>
-                to use it privately, or use the <a href="https://huggingface.co/spaces/facebook/MusicGen">public demo</a>
-                """)
-        with gr.Row():
-            with gr.Column():
-                with gr.Row():
-                    text = gr.Text(label="Input Text", interactive=True, value="4/4 100bpm 320kbps 48khz, Industrial/Electronic Soundtrack, Dark, Intense, Sci-Fi")
-                    melody = gr.Audio(source="upload", type="numpy", label="Melody Condition (optional)", interactive=True)
-                with gr.Row():
-                    submit = gr.Button("Submit")
-                    # Adapted from https://github.com/rkfg/audiocraft/blob/long/app.py, MIT license.
-                    _ = gr.Button("Interrupt").click(fn=interrupt, queue=False)
-                with gr.Row():
-                    background= gr.Image(value="./assets/background.png", source="upload", label="Background", shape=(768,512), type="filepath", interactive=True)
-                    include_settings = gr.Checkbox(label="Add Settings to background", value=True, interactive=True)
-                with gr.Row():
-                    title = gr.Textbox(label="Title", value="MusicGen", interactive=True)
-                    settings_font = gr.Text(label="Settings Font", value="arial.ttf", interactive=True)
-                    settings_font_color = gr.ColorPicker(label="Settings Font Color", value="#ffffff", interactive=True)
-                with gr.Row():
-                    model = gr.Radio(["melody", "medium", "small", "large"], label="Model", value="melody", interactive=True)
-                with gr.Row():
-                    duration = gr.Slider(minimum=1, maximum=1000, value=10, label="Duration", interactive=True)
-                    overlap = gr.Slider(minimum=1, maximum=29, value=5, step=1, label="Overlap", interactive=True)
-                    dimension = gr.Slider(minimum=-2, maximum=2, value=2, step=1, label="Dimension", info="determines which direction to add new segements of audio. (1 = stack tracks, 2 = lengthen, -2..0 = ?)", interactive=True)
-                with gr.Row():
-                    topk = gr.Number(label="Top-k", value=250, interactive=True)
-                    topp = gr.Number(label="Top-p", value=0, interactive=True)
-                    temperature = gr.Number(label="Randomness Temperature", value=1.0, precision=2, interactive=True)
-                    cfg_coef = gr.Number(label="Classifier Free Guidance", value=3.0, precision=2, interactive=True)
-                with gr.Row():
-                    seed = gr.Number(label="Seed", value=-1, precision=0, interactive=True)
-                    gr.Button('\U0001f3b2\ufe0f').style(full_width=False).click(fn=lambda: -1, outputs=[seed], queue=False)
-                    reuse_seed = gr.Button('\u267b\ufe0f').style(full_width=False)
-            with gr.Column() as c:
-                output = gr.Video(label="Generated Music")
-                seed_used = gr.Number(label='Seed used', value=-1, interactive=False)
+            <a href="https://huggingface.co/spaces/musicgen/MusicGen?duplicate=true" style="display: inline-block;margin-top: .5em;margin-right: .25em;" target="_blank">
+            <img style="margin-bottom: 0em;display: inline;margin-top: -.25em;" src="https://bit.ly/3gLdBN6" alt="Duplicate Space"></a>
+            to use it privately, or use the <a href="https://huggingface.co/spaces/facebook/MusicGen">public demo</a>
+            """)
+    with gr.Row():
+        with gr.Column():
+            with gr.Row():
+                text = gr.Text(label="Input Text", interactive=True, value="4/4 100bpm 320kbps 48khz, Industrial/Electronic Soundtrack, Dark, Intense, Sci-Fi")
+                melody = gr.Audio(source="upload", type="numpy", label="Melody Condition (optional)", interactive=True)
+            with gr.Row():
+                submit = gr.Button("Submit")
+                # Adapted from https://github.com/rkfg/audiocraft/blob/long/app.py, MIT license.
+                _ = gr.Button("Interrupt").click(fn=interrupt, queue=False)
+            with gr.Row():
+                background= gr.Image(value="./assets/background.png", source="upload", label="Background", shape=(768,512), type="filepath", interactive=True)
+                include_settings = gr.Checkbox(label="Add Settings to background", value=True, interactive=True)
+            with gr.Row():
+                title = gr.Textbox(label="Title", value="UnlimitedMusicGen", interactive=True)
+                settings_font = gr.Text(label="Settings Font", value="arial.ttf", interactive=True)
+                settings_font_color = gr.ColorPicker(label="Settings Font Color", value="#ffffff", interactive=True)
+            with gr.Row():
+                model = gr.Radio(["melody", "medium", "small", "large"], label="Model", value="melody", interactive=True)
+            with gr.Row():
+                duration = gr.Slider(minimum=1, maximum=1000, value=10, label="Duration", interactive=True)
+                overlap = gr.Slider(minimum=1, maximum=29, value=5, step=1, label="Overlap", interactive=True)
+                dimension = gr.Slider(minimum=-2, maximum=2, value=2, step=1, label="Dimension", info="determines which direction to add new segements of audio. (1 = stack tracks, 2 = lengthen, -2..0 = ?)", interactive=True)
+            with gr.Row():
+                topk = gr.Number(label="Top-k", value=250, interactive=True)
+                topp = gr.Number(label="Top-p", value=0, interactive=True)
+                temperature = gr.Number(label="Randomness Temperature", value=1.0, precision=2, interactive=True)
+                cfg_coef = gr.Number(label="Classifier Free Guidance", value=5.0, precision=2, interactive=True)
+            with gr.Row():
+                seed = gr.Number(label="Seed", value=-1, precision=0, interactive=True)
+                gr.Button('\U0001f3b2\ufe0f').style(full_width=False).click(fn=lambda: -1, outputs=[seed], queue=False)
+                reuse_seed = gr.Button('\u267b\ufe0f').style(full_width=False)
+        with gr.Column() as c:
+            output = gr.Video(label="Generated Music")
+            seed_used = gr.Number(label='Seed used', value=-1, interactive=False)
 
-        reuse_seed.click(fn=lambda x: x, inputs=[seed_used], outputs=[seed], queue=False)
-        submit.click(predict, inputs=[model, text, melody, duration, dimension, topk, topp, temperature, cfg_coef, background, title, include_settings, settings_font, settings_font_color, seed, overlap], outputs=[output, seed_used])
-        gr.Examples(
-            fn=predict,
-            examples=[
-                [
-                    "An 80s driving pop song with heavy drums and synth pads in the background",
-                    "./assets/bach.mp3",
-                    "melody"
-                ],
-                [
-                    "A cheerful country song with acoustic guitars",
-                    "./assets/bolero_ravel.mp3",
-                    "melody"
-                ],
-                [
-                    "90s rock song with electric guitar and heavy drums",
-                    None,
-                    "medium"
-                ],
-                [
-                    "a light and cheerly EDM track, with syncopated drums, aery pads, and strong emotions",
-                    "./assets/bach.mp3",
-                    "melody"
-                ],
-                [
-                    "lofi slow bpm electro chill with organic samples",
-                    None,
-                    "medium",
-                ],
+    reuse_seed.click(fn=lambda x: x, inputs=[seed_used], outputs=[seed], queue=False)
+    submit.click(predict, inputs=[model, text, melody, duration, dimension, topk, topp, temperature, cfg_coef, background, title, include_settings, settings_font, settings_font_color, seed, overlap], outputs=[output, seed_used])
+    gr.Examples(
+        fn=predict,
+        examples=[
+            [
+                "An 80s driving pop song with heavy drums and synth pads in the background",
+                "./assets/bach.mp3",
+                "melody"
             ],
-            inputs=[text, melody, model],
-            outputs=[output]
-        )
-        gr.Markdown(
-            """
-            ### More details
-
-            The model will generate a short music extract based on the description you provided.
-            You can generate up to 30 seconds of audio.
-
-            We present 4 model variations:
-            1. Melody -- a music generation model capable of generating music condition on text and melody inputs. **Note**, you can also use text only.
-            2. Small -- a 300M transformer decoder conditioned on text only.
-            3. Medium -- a 1.5B transformer decoder conditioned on text only.
-            4. Large -- a 3.3B transformer decoder conditioned on text only (might OOM for the longest sequences.)
-
-            When using `melody`, ou can optionaly provide a reference audio from
-            which a broad melody will be extracted. The model will then try to follow both the description and melody provided.
-
-            You can also use your own GPU or a Google Colab by following the instructions on our repo.
-            See [github.com/facebookresearch/audiocraft](https://github.com/facebookresearch/audiocraft)
-            for more details.
-            """
-        )
-
-        # Show the interface
-        launch_kwargs = {}
-        username = kwargs.get('username')
-        password = kwargs.get('password')
-        server_port = kwargs.get('server_port', 0)
-        inbrowser = kwargs.get('inbrowser', False)
-        share = kwargs.get('share', False)
-        server_name = kwargs.get('listen')
-
-        launch_kwargs['server_name'] = server_name
-
-        if username and password:
-            launch_kwargs['auth'] = (username, password)
-        if server_port > 0:
-            launch_kwargs['server_port'] = server_port
-        if inbrowser:
-            launch_kwargs['inbrowser'] = inbrowser
-        if share:
-            launch_kwargs['share'] = share
-
-        interface.queue().launch(**launch_kwargs, max_threads=1)
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--listen',
-        type=str,
-        default='127.0.0.1',
-        help='IP to listen on for connections to Gradio',
+            [
+                "A cheerful country song with acoustic guitars",
+                "./assets/bolero_ravel.mp3",
+                "melody"
+            ],
+            [
+                "90s rock song with electric guitar and heavy drums",
+                None,
+                "medium"
+            ],
+            [
+                "a light and cheerly EDM track, with syncopated drums, aery pads, and strong emotions",
+                "./assets/bach.mp3",
+                "melody"
+            ],
+            [
+                "lofi slow bpm electro chill with organic samples",
+                None,
+                "medium",
+            ],
+        ],
+        inputs=[text, melody, model],
+        outputs=[output]
     )
-    parser.add_argument(
-        '--username', type=str, default='', help='Username for authentication'
-    )
-    parser.add_argument(
-        '--password', type=str, default='', help='Password for authentication'
-    )
-    parser.add_argument(
-        '--server_port',
-        type=int,
-        default=7859,
-        help='Port to run the server listener on',
-    )
-    parser.add_argument(
-        '--inbrowser', action='store_true', help='Open in browser'
-    )
-    parser.add_argument(
-        '--share', action='store_true', help='Share the gradio UI'
-    )
+    
 
-    args = parser.parse_args()
-
-    ui(
-        username=args.username,
-        password=args.password,
-        inbrowser=args.inbrowser,
-        server_port=args.server_port,
-        share=args.share,
-        listen=args.listen
-    )
+demo.queue(max_size=32).launch()
