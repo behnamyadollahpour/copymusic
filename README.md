@@ -129,6 +129,18 @@ Yes. We will soon release the training code for MusicGen and EnCodec.
 ## License
 * The code in this repository is released under the MIT license as found in the [LICENSE file](LICENSE).
 * The weights in this repository are released under the CC-BY-NC 4.0 license as found in the [LICENSE_weights file](LICENSE_weights).
+---
+title: UnlimitedMusicGen
+emoji: 🚀
+colorFrom: pink
+colorTo: red
+sdk: gradio
+sdk_version: 3.34.0
+app_file: app.py
+pinned: false
+license: creativeml-openrail-m
+---
 
 [arxiv]: https://arxiv.org/abs/2306.05284
 [musicgen_samples]: https://ai.honu.io/papers/musicgen/
+Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
