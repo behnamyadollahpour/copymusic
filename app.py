@@ -150,7 +150,7 @@ def predict(model, text, melody, duration, dimension, topk, topp, temperature, c
         output = output.detach().cpu().float()[0]
     with NamedTemporaryFile("wb", suffix=".wav", delete=False) as file:
         if include_settings:
-            video_description = f"{text}\n Duration: {str(initial_duration)} Dimension: {dimension}\n Top-k:{topk} Top-p:{topp}\n Randomness:{temperature}\n cfg:{cfg_coef} overlap: {overlap}\n Seed: {seed}"
+            video_description = f"{text}\n Duration: {str(initial_duration)} Dimension: {dimension}\n Top-k:{topk} Top-p:{topp}\n Randomness:{temperature}\n cfg:{cfg_coef} overlap: {overlap}\n Seed: {seed}\n Melody File:#todo"
             background = add_settings_to_image(title, video_description, background_path=background, font=settings_font, font_color=settings_font_color)
         audio_write(
             file.name, output, MODEL.sample_rate, strategy="loudness",
@@ -171,11 +171,12 @@ def ui(**kwargs):
     """
     with gr.Blocks(title="UnlimitedMusicGen", css=css) as demo:
         gr.Markdown(
-            """
-            # Disclaimer: This won't run on CPU only. Clone this App and run on GPU instance!!!
+            """            
             # UnlimitedMusicGen
             This is your private demo for [UnlimitedMusicGen](https://github.com/Oncorporation/audiocraft), a simple and controllable model for music generation
             presented at: ["Simple and Controllable Music Generation"](https://huggingface.co/papers/2306.05284)
+
+            Disclaimer: This won't run on CPU only. Clone this App and run on GPU instance!
             """
         )
         if IS_SHARED_SPACE:
