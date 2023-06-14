@@ -172,6 +172,7 @@ def ui(**kwargs):
     with gr.Blocks(title="UnlimitedMusicGen", css=css) as demo:
         gr.Markdown(
             """
+            # Disclaimer: This won't run on CPU only. Clone this App and run on GPU instance!!!
             # UnlimitedMusicGen
             This is your private demo for [UnlimitedMusicGen](https://github.com/Oncorporation/audiocraft), a simple and controllable model for music generation
             presented at: ["Simple and Controllable Music Generation"](https://huggingface.co/papers/2306.05284)
