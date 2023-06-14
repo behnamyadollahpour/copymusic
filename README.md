@@ -1,13 +1,16 @@
 ---
 title: UnlimitedMusicGen
-emoji: 🚀
-colorFrom: pink
+emoji: 🎼
+colorFrom: white
 colorTo: red
 sdk: gradio
 sdk_version: 3.34.0
 app_file: app.py
 pinned: false
 license: creativeml-openrail-m
+tags:
+- musicgen
+- unlimited
 ---
 
 [arxiv]: https://arxiv.org/abs/2306.05284
