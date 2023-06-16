@@ -85,7 +85,7 @@ def generate_music_segments(text, melody, MODEL, seed, duration:int=10, overlap:
             descriptions=[text],
             melody_wavs=verse,
             sample_rate=sr,
-            progress=True,
+            progress=False,
             prompt=last_chunk if len(last_chunk) > 0 else None,
         )
 
@@ -162,7 +162,14 @@ def load_font(font_name, font_size=16):
         try:
             font = ImageFont.truetype(font_name, font_size)
         except (FileNotFoundError, OSError):
-            print("Font not found. Trying to download from local assets folder...\n")
+            print("Font not found. Using Hugging Face download..\n")
+
+        if font is None:
+            try:
+                font_path = ImageFont.truetype(hf_hub_download(repo_id="Surn/UnlimitedMusicGen", filename="assets/" + font_name, repo_type="space"), encoding="UTF-8")        
+                font = ImageFont.truetype(font_path, font_size)
+            except (FileNotFoundError, OSError):
+                print("Font not found. Trying to download from local assets folder...\n")
         if font is None:
             try:
                 font = ImageFont.truetype("assets/" + font_name, font_size)
@@ -172,16 +179,13 @@ def load_font(font_name, font_size=16):
     if font is None:
         try:
             req = requests.get(font_name)
-            font = ImageFont.truetype(BytesIO(req.content), font_size)       
-        except (FileNotFoundError, OSError):
-             print(f"Font found: {font_name} Using Hugging Face download font\n")
-
-    if font is None:
-        try:
-            font = ImageFont.truetype(hf_hub_download("assets", font_name), encoding="UTF-8")        
-        except (FileNotFoundError, OSError):
-            font = ImageFont.load_default()
+            font = ImageFont.truetype(BytesIO(req.content), font_size)  
+        except (FileNotFoundError, OSError):            
             print(f"Font not found: {font_name} Using default font\n")
+    if font:
+        print(f"Font loaded {font.getname()}")
+    else:
+        font = ImageFont.load_default()
     return font
 
 

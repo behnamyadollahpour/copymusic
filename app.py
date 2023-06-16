@@ -130,7 +130,7 @@ def predict(model, text, melody, duration, dimension, topk, topp, temperature, c
                 duration -= segment_duration
             else:
                 last_chunk = output_segments[-1][:, :, -overlap*MODEL.sample_rate:]
-                next_segment = MODEL.generate_continuation(last_chunk, MODEL.sample_rate, descriptions=[text], progress=True)
+                next_segment = MODEL.generate_continuation(last_chunk, MODEL.sample_rate, descriptions=[text], progress=False)
                 duration -= segment_duration - overlap
             output_segments.append(next_segment)
 
@@ -204,7 +204,7 @@ def ui(**kwargs):
                 with gr.Row():
                     title = gr.Textbox(label="Title", value="UnlimitedMusicGen", interactive=True)
                     settings_font = gr.Text(label="Settings Font", value="./assets/arial.ttf", interactive=True)
-                    settings_font_color = gr.ColorPicker(label="Settings Font Color", value="#ffffff", interactive=True)
+                    settings_font_color = gr.ColorPicker(label="Settings Font Color", value="#c87f05", interactive=True)
                 with gr.Row():
                     model = gr.Radio(["melody", "medium", "small", "large"], label="Model", value="melody", interactive=True)
                 with gr.Row():
