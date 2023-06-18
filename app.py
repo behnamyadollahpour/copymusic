@@ -211,12 +211,13 @@ def ui(**kwargs):
             # UnlimitedMusicGen
             This is your private demo for [UnlimitedMusicGen](https://github.com/Oncorporation/audiocraft), a simple and controllable model for music generation
             presented at: ["Simple and Controllable Music Generation"](https://huggingface.co/papers/2306.05284)
-            Todo: Working on improved Melody Conditioned Music Generation transitions.
-
+            
             Disclaimer: This won't run on CPU only. Clone this App and run on GPU instance!
+                        
+            Todo: Working on improved Melody Conditioned Music Generation transitions and consistency.
             """
         )
-        if IS_SHARED_SPACE:
+        if IS_SHARED_SPACE and not torch.cuda.is_available():
             gr.Markdown("""
                 ⚠ This Space doesn't work in this shared UI ⚠
 
