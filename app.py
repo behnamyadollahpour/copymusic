@@ -221,7 +221,7 @@ def ui(**kwargs):
             
             Disclaimer: This won't run on CPU only. Clone this App and run on GPU instance!
                         
-            Todo: Working on improved Melody Conditioned Music Generation transitions and consistency.
+            Todo: Working on improved transitions between 30 second segments, improve Interrupt.
             """
         )
         if IS_SHARED_SPACE and not torch.cuda.is_available():
