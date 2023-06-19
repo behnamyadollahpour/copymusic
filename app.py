@@ -15,7 +15,7 @@ import time
 import warnings
 from audiocraft.models import MusicGen
 from audiocraft.data.audio import audio_write
-from audiocraft.data.audio_utils import apply_fade
+from audiocraft.data.audio_utils import apply_fade, apply_tafade
 from audiocraft.utils.extend import generate_music_segments, add_settings_to_image, INTERRUPTING
 import numpy as np
 import random
@@ -165,12 +165,14 @@ def predict(model, text, melody, duration, dimension, topk, topp, temperature, c
                 overlap_samples = overlap * MODEL.sample_rate
                 #stack tracks and fade out/in
                 overlapping_output_fadeout = output[:, :, -overlap_samples:]
-                overlapping_output_fadeout = apply_fade(overlapping_output_fadeout,sample_rate=MODEL.sample_rate,duration=overlap,out=True,start=True, curve_end=0.9, current_device=MODEL.device)
+                overlapping_output_fadeout = apply_fade(overlapping_output_fadeout,sample_rate=MODEL.sample_rate,duration=overlap,out=True,start=True, curve_end=0.0, current_device=MODEL.device)
+                #overlapping_output_fadeout = apply_tafade(overlapping_output_fadeout,sample_rate=MODEL.sample_rate,duration=overlap,out=True,start=True,shape="exponential")
 
                 overlapping_output_fadein = output_segments[i][:, :, :overlap_samples]
-                overlapping_output_fadein = apply_fade(overlapping_output_fadein,sample_rate=MODEL.sample_rate,duration=overlap,out=False,start=False, curve_start=0.1, current_device=MODEL.device)
+                overlapping_output_fadein = apply_fade(overlapping_output_fadein,sample_rate=MODEL.sample_rate,duration=overlap,out=False,start=False, curve_start=0.0, current_device=MODEL.device)
+                #overlapping_output_fadein = apply_tafade(overlapping_output_fadein,sample_rate=MODEL.sample_rate,duration=overlap,out=False,start=False, shape="linear")
 
-                overlapping_output = (overlapping_output_fadeout + overlapping_output_fadein) / 2
+                overlapping_output = torch.cat([overlapping_output_fadeout[:, :, :-(overlap_samples // 2)], overlapping_output_fadein],dim=2)
                 print(f" overlap size Fade:{overlapping_output.size()}\n output: {output.size()}\n segment: {output_segments[i].size()}")
                 ##overlapping_output = torch.cat([output[:, :, -overlap_samples:], output_segments[i][:, :, :overlap_samples]], dim=1) #stack tracks
                 ##print(f" overlap size stack:{overlapping_output.size()}\n output: {output.size()}\n segment: {output_segments[i].size()}")
@@ -190,7 +192,7 @@ def predict(model, text, melody, duration, dimension, topk, topp, temperature, c
             background = add_settings_to_image(title, video_description, background_path=background, font=settings_font, font_color=settings_font_color)
         audio_write(
             file.name, output, MODEL.sample_rate, strategy="loudness",
-            loudness_headroom_db=19, loudness_compressor=True, add_suffix=False, channels=2)
+            loudness_headroom_db=18, loudness_compressor=True, add_suffix=False, channels=2)
         waveform_video = make_waveform(file.name,bg_image=background, bar_count=45)
     if MOVE_TO_CPU:
         MODEL.to('cpu')
@@ -245,7 +247,7 @@ def ui(**kwargs):
                     model = gr.Radio(["melody", "medium", "small", "large"], label="Model", value="melody", interactive=True)
                 with gr.Row():
                     duration = gr.Slider(minimum=1, maximum=720, value=10, label="Duration", interactive=True)
-                    overlap = gr.Slider(minimum=1, maximum=29, value=5, step=1, label="Overlap", interactive=True)
+                    overlap = gr.Slider(minimum=1, maximum=15, value=5, step=1, label="Overlap", interactive=True)
                     dimension = gr.Slider(minimum=-2, maximum=2, value=2, step=1, label="Dimension", info="determines which direction to add new segements of audio. (1 = stack tracks, 2 = lengthen, -2..0 = ?)", interactive=True)
                 with gr.Row():
                     topk = gr.Number(label="Top-k", value=250, precision=0, interactive=True)
