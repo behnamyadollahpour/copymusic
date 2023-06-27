@@ -384,6 +384,13 @@ def ui(**kwargs):
         # Show the interface
         launch_kwargs = {}
         share = kwargs.get('share', False)
+        server_port = kwargs.get('server_port', 0)
+        server_name = kwargs.get('listen')
+
+        launch_kwargs['server_name'] = server_name
+
+        if server_port > 0:
+            launch_kwargs['server_port'] = server_port
         if share:
             launch_kwargs['share'] = share
         launch_kwargs['favicon_path']= "./assets/favicon.ico"
