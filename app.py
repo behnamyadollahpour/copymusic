@@ -403,6 +403,27 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     
     parser.add_argument(
+        '--listen',
+        type=str,
+        default='0.0.0.0' if 'SPACE_ID' in os.environ else '127.0.0.1',
+        help='IP to listen on for connections to Gradio',
+    )
+    parser.add_argument(
+        '--username', type=str, default='', help='Username for authentication'
+    )
+    parser.add_argument(
+        '--password', type=str, default='', help='Password for authentication'
+    )
+    parser.add_argument(
+        '--server_port',
+        type=int,
+        default=0,
+        help='Port to run the server listener on',
+    )
+    parser.add_argument(
+        '--inbrowser', action='store_true', help='Open in browser'
+    )
+    parser.add_argument(
         '--share', action='store_true', help='Share the gradio UI'
     )
     parser.add_argument(
@@ -418,6 +439,21 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
+
+    launch_kwargs = {}
+    launch_kwargs['server_name'] = args.listen
+
+    if args.username and args.password:
+        launch_kwargs['auth'] = (args.username, args.password)
+    if args.server_port:
+        launch_kwargs['server_port'] = args.server_port
+    if args.inbrowser:
+        launch_kwargs['inbrowser'] = args.inbrowser
+    if args.share:
+        launch_kwargs['share'] = args.share
+    launch_kwargs['favicon_path']= "./assets/favicon.ico"
+
+
     UNLOAD_MODEL = args.unload_model
     MOVE_TO_CPU = args.unload_to_cpu
     if args.cache:
