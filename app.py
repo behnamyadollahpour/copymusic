@@ -11,11 +11,13 @@ import argparse
 import torch
 import gradio as gr
 import os
+from pathlib import Path
 import time
+import typing as tp
 import warnings
 from audiocraft.models import MusicGen
 from audiocraft.data.audio import audio_write
-from audiocraft.data.audio_utils import apply_fade, apply_tafade
+from audiocraft.data.audio_utils import apply_fade, apply_tafade, apply_splice_effect
 from audiocraft.utils.extend import generate_music_segments, add_settings_to_image, INTERRUPTING
 import numpy as np
 import random
@@ -37,6 +39,28 @@ def interrupt_callback():
 def interrupt():
     global INTERRUPTING
     INTERRUPTING = True
+
+class FileCleaner:
+    def __init__(self, file_lifetime: float = 3600):
+        self.file_lifetime = file_lifetime
+        self.files = []
+
+    def add(self, path: tp.Union[str, Path]):
+        self._cleanup()
+        self.files.append((time.time(), Path(path)))
+
+    def _cleanup(self):
+        now = time.time()
+        for time_added, path in list(self.files):
+            if now - time_added > self.file_lifetime:
+                if path.exists():
+                    path.unlink()
+                self.files.pop(0)
+            else:
+                break
+
+
+#file_cleaner = FileCleaner()
 
 def toggle_audio_src(choice):
     if choice == "mic":
@@ -235,8 +259,9 @@ def predict(model, text, melody_filepath, duration, dimension, topk, topp, tempe
                     overlapping_output_fadein = output_segments[i][:, :, :overlap_samples]
                     #overlapping_output_fadein = apply_fade(overlapping_output_fadein,sample_rate=MODEL.sample_rate,duration=overlap,out=False,start=False, curve_start=0.0, current_device=MODEL.device)
                     overlapping_output_fadein = apply_tafade(overlapping_output_fadein,sample_rate=MODEL.sample_rate,duration=overlap,out=False,start=False, shape="linear")
-
+                    
                     overlapping_output = torch.cat([overlapping_output_fadeout[:, :, :-(overlap_samples // 2)], overlapping_output_fadein],dim=2)
+                    ###overlapping_output, overlap_sample_rate = apply_splice_effect(overlapping_output_fadeout, MODEL.sample_rate, overlapping_output_fadein, MODEL.sample_rate, overlap)
                     print(f" overlap size Fade:{overlapping_output.size()}\n output: {output.size()}\n segment: {output_segments[i].size()}")
                     ##overlapping_output = torch.cat([output[:, :, -overlap_samples:], output_segments[i][:, :, :overlap_samples]], dim=1) #stack tracks
                     ##print(f" overlap size stack:{overlapping_output.size()}\n output: {output.size()}\n segment: {output_segments[i].size()}")
