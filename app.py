@@ -35,6 +35,7 @@ UNLOAD_MODEL = False
 MOVE_TO_CPU = False
 MAX_PROMPT_INDEX = 0
 git = os.environ.get('GIT', "git")
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"
 
 def interrupt_callback():
     return INTERRUPTED
@@ -473,7 +474,7 @@ def ui(**kwargs):
 
 
 
-        demo.queue(max_size=12).launch(**launch_kwargs)
+        demo.queue(max_size=10, concurrency_count=1, api_open=False).launch(**launch_kwargs)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
